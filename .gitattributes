@@ -1,0 +1,5 @@
+# Keep development-only files out of `git archive` (and therefore out of the
+# packaged zip). The zip must contain manifest.json at its top level.
+.gitignore      export-ignore
+.gitattributes  export-ignore
+tools/          export-ignore
