@@ -47,7 +47,7 @@ function drawSilk(ctx, w, h, rng, pal) {
   }
   ctx.restore();
   vignette(ctx, w, h, 0.3);
-  grain(ctx, w, h, 0.05);
+  grain(ctx, w, h, 0.05, rng);
 }
 
 // ---- Bloom: soft mesh-gradient orbs ----
@@ -98,7 +98,7 @@ function drawBloom(ctx, w, h, rng, pal) {
   ctx.drawImage(off, 0, 0, w, h);
   ctx.restore();
   vignette(ctx, w, h, 0.18);
-  grain(ctx, w, h, 0.09);
+  grain(ctx, w, h, 0.09, rng);
 }
 
 // ---- Highlands: layered mountain ridges at dusk or night ----
@@ -158,7 +158,7 @@ function drawHighlands(ctx, w, h, rng, pal) {
     ctx.fill();
   }
   vignette(ctx, w, h, 0.22);
-  grain(ctx, w, h, 0.045);
+  grain(ctx, w, h, 0.045, rng);
 }
 
 // ---- Aurora: curtains of light over a dark landscape ----
@@ -219,7 +219,7 @@ function drawAurora(ctx, w, h, rng, pal) {
   ctx.fill();
 
   vignette(ctx, w, h, 0.25);
-  grain(ctx, w, h, 0.05);
+  grain(ctx, w, h, 0.05, rng);
 }
 
 // ---- Facets: low-poly triangle mesh over a color field ----
@@ -283,7 +283,7 @@ function drawFacets(ctx, w, h, rng, pal) {
       }
     }
   }
-  grain(ctx, w, h, 0.045);
+  grain(ctx, w, h, 0.045, rng);
   vignette(ctx, w, h, 0.16);
 }
 
@@ -371,7 +371,7 @@ function drawNebula(ctx, w, h, rng, pal, px) {
     ctx.stroke();
   }
   vignette(ctx, w, h, 0.32);
-  grain(ctx, w, h, 0.05);
+  grain(ctx, w, h, 0.05, rng);
 }
 
 // ---- Conduit: truchet arc tiles ----
@@ -414,7 +414,7 @@ function drawConduit(ctx, w, h, rng, pal) {
       }
     }
   }
-  grain(ctx, w, h, 0.05);
+  grain(ctx, w, h, 0.05, rng);
   vignette(ctx, w, h, 0.22);
 }
 
@@ -488,7 +488,7 @@ function drawMosaic(ctx, w, h, rng, pal) {
       ctx.restore();
     }
   }
-  grain(ctx, w, h, 0.05);
+  grain(ctx, w, h, 0.05, rng);
 }
 
 // ---- Topo: concentric noise-distorted contour rings ----
@@ -533,7 +533,7 @@ function drawTopo(ctx, w, h, rng, pal) {
     ctx.stroke();
   }
   vignette(ctx, w, h, 0.35);
-  grain(ctx, w, h, 0.05);
+  grain(ctx, w, h, 0.05, rng);
 }
 
 export const GENERATORS = [

@@ -1,49 +1,185 @@
 <!doctype html>
-<html>
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <title>New Tab</title>
-<link rel="stylesheet" href="css/newtab.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/widgets.css">
+<link rel="stylesheet" href="css/panel.css">
 </head>
 <body>
-<canvas id="wall"></canvas>
 
-<form id="search" class="hidden" autocomplete="off">
-  <div id="engines">
-    <button type="button" class="eng" data-engine="google" title="Google">G</button>
-    <button type="button" class="eng" data-engine="youtube" title="YouTube">YT</button>
-    <button type="button" class="eng" data-engine="duckduckgo" title="DuckDuckGo">DDG</button>
-  </div>
-  <input id="q" type="text" placeholder="Search&hellip;" spellcheck="false">
-</form>
+<!-- wallpaper stack: instant palette wash, then two canvases that crossfade -->
+<div id="stage">
+  <div id="wash"></div>
+  <canvas class="wall" id="wall-a"></canvas>
+  <canvas class="wall" id="wall-b"></canvas>
+</div>
+<div id="scrim"></div>
 
-<div id="caption"></div>
+<main id="app">
+  <section id="clock" class="rise" style="--d: 0.02s" hidden>
+    <time id="clock-time"></time>
+    <p id="clock-date"></p>
+  </section>
 
-<div id="controls">
-  <button class="ctl" id="btn-new" title="New wallpaper (N)">
-    <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.42 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+  <form id="search" class="rise" style="--d: 0.09s" autocomplete="off" hidden>
+    <div class="field">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10.5 3a7.5 7.5 0 1 1-4.62 13.41l-3.64 3.64a1 1 0 0 1-1.42-1.42l3.64-3.64A7.5 7.5 0 0 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/>
+      </svg>
+      <input id="q" type="text" spellcheck="false" autocapitalize="off" aria-label="Search">
+      <kbd id="go" aria-hidden="true">&crarr;</kbd>
+    </div>
+    <div id="engines" role="tablist" aria-label="Search engine"></div>
+  </form>
+
+  <nav id="pins" class="rise" style="--d: 0.15s" aria-label="Pinned sites" hidden></nav>
+</main>
+
+<div id="notes" aria-label="Sticky notes"></div>
+
+<button id="annotation" class="rise" style="--d: 0.21s" type="button" title="Copy this seed"></button>
+
+<div id="controls" class="rise" style="--d: 0.25s">
+  <button class="ctl" id="btn-note" title="New note (Shift+N)" aria-label="New note">
+    <svg viewBox="0 0 24 24"><path d="M5 3h9.2L21 9.8V21a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm8 2H6v14h13v-8h-5a1 1 0 0 1-1-1V5zm2 1.4V9h2.6L15 6.4z"/></svg>
   </button>
-  <button class="ctl" id="btn-download" title="Download wallpaper in 4K (D)">
-    <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+  <button class="ctl" id="btn-new" title="Pull another print (N)" aria-label="New wallpaper">
+    <svg viewBox="0 0 24 24"><path d="M17.6 6.4 15.3 4.1a1 1 0 0 1 1.4-1.4l4 4a1 1 0 0 1 0 1.4l-4 4a1 1 0 0 1-1.4-1.4l2.3-2.3H8a3 3 0 0 0-3 3 1 1 0 0 1-2 0 5 5 0 0 1 5-5h9.6zM6.4 17.6l2.3 2.3a1 1 0 0 1-1.4 1.4l-4-4a1 1 0 0 1 0-1.4l4-4a1 1 0 1 1 1.4 1.4l-2.3 2.3H16a3 3 0 0 0 3-3 1 1 0 1 1 2 0 5 5 0 0 1-5 5H6.4z"/></svg>
   </button>
-  <button class="ctl" id="btn-settings" title="Settings">
+  <button class="ctl" id="btn-download" title="Save this print in 4K (D)" aria-label="Download wallpaper">
+    <svg viewBox="0 0 24 24"><path d="M12 3a1 1 0 0 1 1 1v9.6l3.3-3.3a1 1 0 0 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1h14a1 1 0 1 1 0 2H5a2 2 0 0 1-2-2 1 1 0 0 1 1-1z"/></svg>
+  </button>
+  <button class="ctl" id="btn-settings" title="Settings (,)" aria-label="Settings" aria-expanded="false">
     <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
   </button>
 </div>
 
-<div id="panel" class="hidden">
-  <h3>Settings</h3>
-  <div class="row"><span>Search bar</span><input type="checkbox" id="opt-search"></div>
-  <div class="row" id="row-engine"><span>Engine</span>
-    <div class="seg" id="opt-engine">
-      <button data-v="google">Google</button>
-      <button data-v="youtube">YouTube</button>
-      <button data-v="duckduckgo">DuckDuckGo</button>
-    </div>
+<aside id="panel" hidden aria-label="Settings">
+  <header>
+    <h2>Settings</h2>
+    <button class="icon-btn" id="panel-close" aria-label="Close settings">
+      <svg viewBox="0 0 24 24"><path d="M6.4 5A1 1 0 0 0 5 6.4L10.6 12 5 17.6A1 1 0 0 0 6.4 19L12 13.4 17.6 19a1 1 0 0 0 1.4-1.4L13.4 12 19 6.4A1 1 0 0 0 17.6 5L12 10.6 6.4 5z"/></svg>
+    </button>
+  </header>
+
+  <div class="panel-body">
+    <section>
+      <h3>Appearance</h3>
+      <div class="row"><span class="label">Theme</span>
+        <div class="seg" id="opt-theme">
+          <button type="button" data-v="light">Light</button>
+          <button type="button" data-v="dark">Dark</button>
+          <button type="button" data-v="system">System</button>
+        </div>
+      </div>
+      <div class="row"><label class="label" for="opt-dim">Dim wallpaper</label>
+        <input type="range" id="opt-dim" min="0" max="70" step="5">
+      </div>
+      <div class="row"><label class="label" for="opt-motion">Ambient motion</label>
+        <input type="checkbox" id="opt-motion">
+      </div>
+    </section>
+
+    <section>
+      <h3>Clock</h3>
+      <div class="row"><label class="label" for="opt-clock">Show clock</label>
+        <input type="checkbox" id="opt-clock">
+      </div>
+      <div class="row"><span class="label">Time format</span>
+        <div class="seg" id="opt-hour">
+          <button type="button" data-v="12">12&#8202;h</button>
+          <button type="button" data-v="24">24&#8202;h</button>
+        </div>
+      </div>
+      <div class="row"><label class="label" for="opt-seconds">Show seconds</label>
+        <input type="checkbox" id="opt-seconds">
+      </div>
+      <div class="row"><label class="label" for="opt-date">Show date</label>
+        <input type="checkbox" id="opt-date">
+      </div>
+    </section>
+
+    <section>
+      <h3>Search</h3>
+      <div class="row"><label class="label" for="opt-search">Show search bar</label>
+        <input type="checkbox" id="opt-search">
+      </div>
+      <p class="hint">Checked engines appear under the search bar. Drag to reorder them.</p>
+      <ul class="checklist" id="engine-list"></ul>
+      <button type="button" class="ghost" id="add-engine">Add a custom engine</button>
+    </section>
+
+    <section>
+      <h3>Pinned sites</h3>
+      <div class="row"><label class="label" for="opt-pins">Show pins</label>
+        <input type="checkbox" id="opt-pins">
+      </div>
+      <div class="row"><span class="label">Tile icons</span>
+        <div class="seg" id="opt-pinicon">
+          <button type="button" data-v="favicon">Site icon</button>
+          <button type="button" data-v="monogram">Monogram</button>
+        </div>
+      </div>
+      <p class="hint">Hover a tile to edit or remove it. Drag tiles to reorder.</p>
+      <button type="button" class="ghost" id="add-pin">Add a site</button>
+    </section>
+
+    <section>
+      <h3>Notes</h3>
+      <div class="row"><label class="label" for="opt-notes">Show notes</label>
+        <input type="checkbox" id="opt-notes">
+      </div>
+      <p class="hint">Notes stay on this page and sync nowhere. Drag by the top edge, resize from the corner.</p>
+      <button type="button" class="ghost" id="add-note">New note</button>
+    </section>
+
+    <section>
+      <h3>Wallpaper</h3>
+      <div class="row"><label class="label" for="opt-style">Style</label>
+        <select id="opt-style"></select>
+      </div>
+      <div class="row"><label class="label" for="opt-cadence">Change it</label>
+        <select id="opt-cadence">
+          <option value="tab">Every tab</option>
+          <option value="hour">Every hour</option>
+          <option value="day">Every day</option>
+          <option value="manual">Only when I shuffle</option>
+        </select>
+      </div>
+      <div class="row"><label class="label" for="opt-caption">Show annotation</label>
+        <input type="checkbox" id="opt-caption">
+      </div>
+    </section>
+
+    <section>
+      <h3>Shortcuts</h3>
+      <dl class="keys">
+        <dt><kbd>N</kbd></dt><dd>Pull another print</dd>
+        <dt><kbd>&#8679;</kbd><kbd>N</kbd></dt><dd>New note</dd>
+        <dt><kbd>D</kbd></dt><dd>Save in 4K</dd>
+        <dt><kbd>/</kbd></dt><dd>Jump to search</dd>
+        <dt><kbd>&#8677;</kbd></dt><dd>Next engine, while searching</dd>
+        <dt><kbd>,</kbd></dt><dd>Settings</dd>
+      </dl>
+    </section>
   </div>
-  <div class="row"><span>Style</span><select id="opt-style"></select></div>
-  <p class="hint">Shortcuts: N new wallpaper &middot; D download &middot; / search</p>
-</div>
+</aside>
+
+<dialog id="dlg">
+  <form method="dialog" id="dlg-form">
+    <h2 id="dlg-title"></h2>
+    <div id="dlg-fields"></div>
+    <p class="dlg-error" id="dlg-error" hidden></p>
+    <menu>
+      <button type="button" class="ghost" id="dlg-cancel">Cancel</button>
+      <button type="submit" class="primary" id="dlg-ok">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<output id="toast" role="status" aria-live="polite"></output>
 
 <script type="module" src="js/newtab.js"></script>
 </body>

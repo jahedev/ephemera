@@ -1,228 +1,177 @@
-import { PALETTES } from "./art/palettes.js";
-import { GENERATORS } from "./art/generators.js";
-import { mulberry32, randomSeed } from "./art/util.js";
+// Ephemera - a new print on every tab.
+//
+// This file owns the settings object and keeps every widget in sync with it.
+// Widgets never read storage themselves; they're handed the slice they need
+// and a callback to save it.
 
-const ENGINES = {
-  google: { label: "Google", url: "https://www.google.com/search?q=" },
-  youtube: { label: "YouTube", url: "https://www.youtube.com/results?search_query=" },
-  duckduckgo: { label: "DuckDuckGo", url: "https://duckduckgo.com/?q=" }
-};
+import { boot, saveSettings, saveNotes, savePrint, debounce } from "./store.js";
+import * as Wall from "./wallpaper.js";
+import { initTheme, setTheme, isDark } from "./theme.js";
+import { updateClock } from "./widgets/clock.js";
+import { updateSearch, focusSearch } from "./widgets/search.js";
+import { updatePins } from "./widgets/pins.js";
+import { updateNotes, addNote, relayoutNotes } from "./widgets/notes.js";
+import { mountPanel, syncPanel, togglePanel, closePanel, panelOpen } from "./ui/panel.js";
+import { toast } from "./ui/toast.js";
 
-const DEFAULTS = { searchEnabled: false, engine: "google", style: "auto" };
+const stage = document.getElementById("stage");
+const annotation = document.getElementById("annotation");
+const btnDownload = document.getElementById("btn-download");
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const $ = (id) => document.getElementById(id);
-const canvas = $("wall");
-const caption = $("caption");
-const searchForm = $("search");
-const qInput = $("q");
-const panel = $("panel");
-const btnNew = $("btn-new");
-const btnDownload = $("btn-download");
-const btnSettings = $("btn-settings");
-const optSearch = $("opt-search");
-const optStyle = $("opt-style");
-const rowEngine = $("row-engine");
-
-let settings = { ...DEFAULTS };
-let state = { seed: 0, styleId: GENERATORS[0].id };
+let settings = null;
+let print = null;
 let downloading = false;
 
-// ---- storage (chrome.storage.sync in the extension, localStorage fallback) ----
-const hasChrome = typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync;
+/* ---- applying settings ---- */
 
-function loadSettings() {
-  if (hasChrome) {
-    return new Promise((res) => chrome.storage.sync.get(DEFAULTS, res));
-  }
-  try {
-    return Promise.resolve({ ...DEFAULTS, ...(JSON.parse(localStorage.getItem("ant-settings")) || {}) });
-  } catch {
-    return Promise.resolve({ ...DEFAULTS });
-  }
+function applyAll() {
+  document.documentElement.style.setProperty("--dim", settings.dim);
+  document.body.classList.toggle("motion", settings.motion && !reducedMotion);
+  setTheme(settings.theme);
+  updateClock(settings.clock);
+  updateSearch(settings.search, save);
+  updatePins(settings.pins, save);
+  updateNotes({ on: settings.notes.enabled, onSave: saveNotes });
+  annotation.hidden = !settings.wallpaper.annotation;
 }
 
-function saveSettings() {
-  if (hasChrome) chrome.storage.sync.set(settings);
-  else localStorage.setItem("ant-settings", JSON.stringify(settings));
+function save() {
+  saveSettings(settings);
 }
 
-// ---- rendering ----
-// Renders into any canvas at cssW x cssH logical units scaled by pxScale.
-// Same (seed, styleId, cssW, cssH) always produces the same image, so the
-// download path re-renders the visible wallpaper at 4K.
-function renderTo(cnv, cssW, cssH, pxScale, seed, styleId) {
-  cnv.width = Math.round(cssW * pxScale);
-  cnv.height = Math.round(cssH * pxScale);
-  const ctx = cnv.getContext("2d");
-  ctx.save();
-  ctx.scale(pxScale, pxScale);
-  const rng = mulberry32(seed);
-  const pal = PALETTES[Math.floor(rng() * PALETTES.length)];
-  const gen = GENERATORS.find((g) => g.id === styleId) || GENERATORS[0];
-  gen.draw(ctx, cssW, cssH, rng, pal, pxScale);
-  ctx.restore();
-  return { pal, gen };
+function commit({ rerender = false } = {}) {
+  save();
+  applyAll();
+  syncPanel();
+  if (rerender) shuffle();
 }
 
-function renderMain() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const { pal, gen } = renderTo(canvas, w, h, dpr, state.seed, state.styleId);
-  canvas.classList.add("ready");
-  caption.textContent = `${gen.name} · ${pal.name}`;
+/* ---- the print ---- */
+
+function renderPrint() {
+  const { gen, pal } = Wall.show(print.seed, print.styleId, isDark());
+  annotation.textContent = `№ ${Wall.seedLabel(print.seed)} · ${gen.name} on ${pal.name} · 1/1`;
+  savePrint(print);
 }
 
-function pickStyle() {
-  if (settings.style !== "auto") return settings.style;
-  return GENERATORS[Math.floor(Math.random() * GENERATORS.length)].id;
-}
-
-function newWallpaper() {
-  state = { seed: randomSeed(), styleId: pickStyle() };
-  renderMain();
+function shuffle() {
+  print = Wall.fresh(settings.wallpaper);
+  Wall.paintWash(print.seed);
+  renderPrint();
 }
 
 function download() {
   if (downloading) return;
   downloading = true;
   btnDownload.classList.add("busy");
-  // let the spinner paint before the heavy synchronous render
-  setTimeout(() => {
-    try {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const k = Math.max(3840 / w, 2160 / h, window.devicePixelRatio || 1);
-      const off = document.createElement("canvas");
-      renderTo(off, w, h, k, state.seed, state.styleId);
-      off.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `wallpaper-${state.styleId}-${state.seed.toString(36)}.png`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        btnDownload.classList.remove("busy");
-        downloading = false;
-      }, "image/png");
-    } catch (err) {
+  Wall.download()
+    .catch((err) => {
+      console.error(err);
+      toast("Could not save that print");
+    })
+    .finally(() => {
       btnDownload.classList.remove("busy");
       downloading = false;
-      throw err;
-    }
-  }, 40);
+    });
 }
 
-// ---- UI sync ----
-function applySettings() {
-  searchForm.classList.toggle("hidden", !settings.searchEnabled);
-  rowEngine.classList.toggle("hidden", !settings.searchEnabled);
-  optSearch.checked = settings.searchEnabled;
-  optStyle.value = settings.style;
-  qInput.placeholder = `Search ${ENGINES[settings.engine].label}…`;
-  document.querySelectorAll(".eng").forEach((b) => {
-    b.classList.toggle("active", b.dataset.engine === settings.engine);
-  });
-  document.querySelectorAll("#opt-engine button").forEach((b) => {
-    b.classList.toggle("active", b.dataset.v === settings.engine);
-  });
-}
+/* ---- wiring ---- */
 
-function setEngine(v) {
-  settings.engine = v;
-  saveSettings();
-  applySettings();
-}
-
-// ---- wiring ----
-optStyle.innerHTML = "";
-const autoOpt = document.createElement("option");
-autoOpt.value = "auto";
-autoOpt.textContent = "Surprise me";
-optStyle.appendChild(autoOpt);
-for (const g of GENERATORS) {
-  const o = document.createElement("option");
-  o.value = g.id;
-  o.textContent = g.name;
-  optStyle.appendChild(o);
-}
-
-btnNew.addEventListener("click", newWallpaper);
-btnDownload.addEventListener("click", download);
-btnSettings.addEventListener("click", (e) => {
-  e.stopPropagation();
-  panel.classList.toggle("hidden");
-});
-document.addEventListener("click", (e) => {
-  if (!panel.classList.contains("hidden") && !panel.contains(e.target)) {
-    panel.classList.add("hidden");
+document.getElementById("btn-new").addEventListener("click", shuffle);
+document.getElementById("btn-download").addEventListener("click", download);
+document.getElementById("btn-note").addEventListener("click", () => {
+  if (!settings.notes.enabled) {
+    settings.notes.enabled = true;
+    commit();
   }
+  addNote();
 });
 
-optSearch.addEventListener("change", () => {
-  settings.searchEnabled = optSearch.checked;
-  saveSettings();
-  applySettings();
-});
-
-optStyle.addEventListener("change", () => {
-  settings.style = optStyle.value;
-  saveSettings();
-  newWallpaper();
-});
-
-document.querySelectorAll(".eng").forEach((b) => {
-  b.addEventListener("click", () => {
-    setEngine(b.dataset.engine);
-    qInput.focus();
-  });
-});
-document.querySelectorAll("#opt-engine button").forEach((b) => {
-  b.addEventListener("click", () => setEngine(b.dataset.v));
-});
-
-searchForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const q = qInput.value.trim();
-  if (q) location.href = ENGINES[settings.engine].url + encodeURIComponent(q);
+annotation.addEventListener("click", async () => {
+  const label = Wall.seedLabel(print.seed);
+  try {
+    await navigator.clipboard.writeText(label);
+    toast(`Seed ${label} copied`);
+  } catch {
+    toast(`Seed ${label}`);
+  }
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  const tag = e.target.tagName;
-  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
-  const k = e.key.toLowerCase();
-  if (k === "n") newWallpaper();
-  else if (k === "d") download();
-  else if (k === "/" && settings.searchEnabled) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
     e.preventDefault();
-    qInput.focus();
+    focusSearch();
+    return;
+  }
+  if (e.key === "Escape" && panelOpen()) {
+    closePanel();
+    return;
+  }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  // Buttons stay eligible: single letters don't activate them, and after
+  // clicking shuffle the keyboard shortcuts should still work.
+  const t = e.target;
+  if (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName)) return;
+
+  const key = e.key.toLowerCase();
+  if (key === "n") (e.shiftKey ? addNote : shuffle)();
+  else if (key === "d") download();
+  else if (key === ",") togglePanel();
+  else if (key === "/") {
+    e.preventDefault();
+    focusSearch();
   }
 });
 
-let resizeTimer;
-window.addEventListener("resize", () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(renderMain, 180);
+const onResize = debounce(() => {
+  Wall.redraw();
+  relayoutNotes();
+}, 180);
+addEventListener("resize", onResize);
+
+// Parallax: the print sits a little deeper than the chrome above it.
+let parallaxQueued = false;
+addEventListener("pointermove", (e) => {
+  if (!settings?.motion || reducedMotion || parallaxQueued) return;
+  parallaxQueued = true;
+  requestAnimationFrame(() => {
+    parallaxQueued = false;
+    stage.style.setProperty("--px", `${(0.5 - e.clientX / innerWidth) * 16}px`);
+    stage.style.setProperty("--py", `${(0.5 - e.clientY / innerHeight) * 12}px`);
+  });
 });
 
-// ---- init ----
+/* ---- start ---- */
+
 (async function init() {
-  settings = await loadSettings();
-  if (!ENGINES[settings.engine]) settings.engine = DEFAULTS.engine;
-  if (settings.style !== "auto" && !GENERATORS.some((g) => g.id === settings.style)) {
-    settings.style = "auto";
-  }
+  const data = await boot();
+  settings = data.settings;
 
-  // debug/preview overrides: newtab.html?style=silk&seed=42&search=1
+  print = Wall.decide(settings.wallpaper, data.print);
+
+  // Preview overrides for working on generators outside the extension:
+  // newtab.html?style=silk&seed=3F9A2C
   const qp = new URLSearchParams(location.search);
-  if (qp.has("search")) settings.searchEnabled = qp.get("search") !== "0";
-  applySettings();
-
-  state = { seed: randomSeed(), styleId: pickStyle() };
-  if (qp.has("seed")) state.seed = Number(qp.get("seed")) >>> 0;
-  if (qp.has("style") && GENERATORS.some((g) => g.id === qp.get("style"))) {
-    state.styleId = qp.get("style");
+  if (qp.has("seed")) {
+    const raw = qp.get("seed");
+    const n = /^[0-9]+$/.test(raw) ? Number(raw) : parseInt(raw, 16);
+    if (Number.isFinite(n)) print.seed = n >>> 0;
   }
-  renderMain();
+  if (qp.has("style") && Wall.styles().some((g) => g.id === qp.get("style"))) {
+    print.styleId = qp.get("style");
+  }
+
+  // Wash first: it costs nothing and means the tab is never blank while a
+  // generator runs.
+  Wall.paintWash(print.seed);
+  initTheme(settings.theme, (dark) => Wall.applyAccent(dark));
+
+  applyAll();
+  updateNotes({ list: data.notes, on: settings.notes.enabled, onSave: saveNotes });
+  mountPanel({ settings, commit, styles: Wall.styles() });
+
+  document.body.classList.add("ready");
+  requestAnimationFrame(renderPrint);
 })();

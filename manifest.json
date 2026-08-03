@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Another New Tab - Generative Wallpapers",
-  "short_name": "AnotherNewTab",
-  "version": "1.0.0",
-  "description": "A freshly generated wallpaper on every new tab - never the same one twice. Download any of them in 4K, with an optional search bar.",
+  "name": "Ephemera - Generative New Tab",
+  "short_name": "Ephemera",
+  "version": "2.0.0",
+  "description": "A new procedural print on every tab, never the same one twice. Clock, search, pinned sites and sticky notes on top - all optional, all yours.",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "favicon"],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

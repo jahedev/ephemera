@@ -1,0 +1,575 @@
+/* ==========================================================================
+   Ephemera - the things that sit on top of the print
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Clock
+   --------------------------------------------------------------------------
+   Didot for the hour and minute; seconds and meridiem drop into the mono
+   utility face, which keeps them tabular so nothing shifts as they tick.
+   -------------------------------------------------------------------------- */
+
+#clock {
+  text-align: center;
+  text-shadow: var(--halo);
+  user-select: none;
+}
+
+#clock-time {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(58px, 8.5vw, 122px);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+#clock-time .sec,
+#clock-time .mer {
+  font-family: var(--font-mono);
+  font-size: 0.17em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  /* lengths on vertical-align resolve against this element's own size, so it
+     takes a large multiple to reach the cap height of the numerals */
+  vertical-align: 2.7em;
+  opacity: 0.5;
+  margin-left: 0.3em;
+}
+
+#clock-time .sec { margin-left: 0.2em; opacity: 0.38; }
+
+#clock-date {
+  margin: 16px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* --------------------------------------------------------------------------
+   Search
+   -------------------------------------------------------------------------- */
+
+#search {
+  width: min(620px, 90vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 18px;
+  height: 58px;
+  border-radius: 999px;
+  background: rgb(var(--surface) / var(--plate-a));
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  border: 1px solid rgb(var(--ink) / var(--hairline));
+  box-shadow: var(--shadow);
+  transition: border-color 0.25s, box-shadow 0.35s var(--ease-out), background 0.25s;
+}
+
+.field:focus-within {
+  border-color: rgb(var(--accent) / 0.6);
+  background: rgb(var(--surface) / var(--plate-hi));
+  box-shadow: var(--shadow), 0 0 0 4px rgb(var(--accent) / 0.13);
+}
+
+.field .glyph {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  fill: currentColor;
+  opacity: 0.38;
+  transition: opacity 0.25s;
+}
+.field:focus-within .glyph { opacity: 0.7; }
+
+#q {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 16.5px;
+  padding: 0;
+}
+#q::placeholder { color: rgb(var(--ink) / 0.42); }
+
+#go {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgb(var(--ink) / 0.09);
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+#q:placeholder-shown ~ #go { opacity: 0; }
+
+/* engine strip - a gallery caption row, not a toolbar */
+#engines {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 6px;
+  margin-top: 15px;
+  max-width: 100%;
+}
+
+.eng {
+  position: relative;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 5px 9px 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  text-shadow: var(--halo);
+  transition: opacity 0.2s, transform 0.2s var(--ease-out);
+}
+
+.eng::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 2px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: rgb(var(--accent));
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.32s var(--ease-spring);
+}
+
+.eng:hover { opacity: 0.8; }
+.eng[aria-selected="true"] { opacity: 1; }
+.eng[aria-selected="true"]::after { transform: scaleX(1); }
+
+/* --------------------------------------------------------------------------
+   Pinned sites
+   -------------------------------------------------------------------------- */
+
+#pins {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: min(760px, 92vw);
+}
+
+.pin {
+  position: relative;
+  width: 78px;
+  padding: 12px 6px 10px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  background: rgb(var(--surface) / 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition: background 0.24s, border-color 0.24s, transform 0.24s var(--ease-out),
+              backdrop-filter 0.24s, box-shadow 0.24s;
+}
+
+.pin:hover,
+.pin:focus-visible {
+  transform: translateY(-3px);
+  background: rgb(var(--surface) / var(--plate-a));
+  border-color: rgb(var(--ink) / var(--hairline));
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  box-shadow: var(--shadow);
+}
+
+.pin.dragging { opacity: 0.4; }
+.pin.drop-before { box-shadow: inset 3px 0 0 -1px rgb(var(--accent)); }
+.pin.drop-after { box-shadow: inset -3px 0 0 -1px rgb(var(--accent)); }
+
+.pin-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgb(var(--ink) / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(var(--ink) / 0.08);
+}
+
+.pin-icon img { width: 24px; height: 24px; display: block; }
+
+.pin-mono {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+  color: hsl(var(--pin-h, 250) 65% 88%);
+  background: linear-gradient(150deg, hsl(var(--pin-h, 250) 55% 42%), hsl(var(--pin-h, 250) 60% 26%));
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding-bottom: 1px;
+}
+
+.pin-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.62;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: var(--halo);
+}
+.pin:hover .pin-label { opacity: 0.9; text-shadow: none; }
+
+.pin-edit {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.pin:hover .pin-edit,
+.pin:focus-within .pin-edit { opacity: 1; }
+
+.pin-edit button {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgb(var(--ink) / 0.14);
+  color: rgb(var(--ink) / 0.8);
+  transition: background 0.15s, color 0.15s;
+}
+.pin-edit button:hover { background: rgb(var(--ink) / 0.3); color: rgb(var(--ink)); }
+.pin-edit svg { width: 11px; height: 11px; fill: currentColor; }
+
+.pin.add .pin-icon {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px rgb(var(--ink) / 0.22);
+  border-radius: 13px;
+}
+.pin.add {
+  opacity: 0.4;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  font: inherit;
+}
+.pin.add:hover { opacity: 1; }
+.pin.add svg { width: 17px; height: 17px; fill: currentColor; opacity: 0.8; }
+
+/* --------------------------------------------------------------------------
+   Sticky notes
+   -------------------------------------------------------------------------- */
+
+#notes {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.note {
+  --note-s: 1;
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  min-height: 110px;
+  border-radius: 4px 4px 4px 14px;
+  transform: rotate(var(--rot, 0deg));
+  background: hsl(var(--note-h) calc(44% * var(--note-s)) 17% / 0.76);
+  color: hsl(var(--note-h) calc(55% * var(--note-s)) 88%);
+  border: 1px solid hsl(var(--note-h) calc(45% * var(--note-s)) 62% / 0.26);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  transition: box-shadow 0.3s var(--ease-out), transform 0.35s var(--ease-spring);
+  animation: note-in 0.4s var(--ease-spring) both;
+}
+
+html[data-theme="light"] .note {
+  background: hsl(var(--note-h) calc(76% * var(--note-s)) 88% / 0.86);
+  color: hsl(var(--note-h) calc(55% * var(--note-s)) 19%);
+  border-color: hsl(var(--note-h) calc(50% * var(--note-s)) 42% / 0.22);
+}
+
+@keyframes note-in {
+  from { opacity: 0; transform: rotate(var(--rot, 0deg)) scale(0.88); }
+  to   { opacity: 1; transform: rotate(var(--rot, 0deg)) scale(1); }
+}
+
+.note.leaving {
+  animation: note-out 0.22s ease-in both;
+  pointer-events: none;
+}
+@keyframes note-out {
+  to { opacity: 0; transform: rotate(var(--rot, 0deg)) scale(0.9); }
+}
+
+/* lifting a card off the desk: it straightens out and casts further */
+.note.dragging {
+  transform: rotate(0deg) scale(1.025);
+  box-shadow: var(--shadow-lift);
+  transition: box-shadow 0.2s, transform 0.2s var(--ease-out);
+  z-index: 10;
+}
+
+.note-bar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 26px;
+  cursor: grab;
+  border-radius: 3px 3px 0 0;
+  background: currentColor;
+  opacity: 0.06;
+}
+.note.dragging .note-bar { cursor: grabbing; }
+
+.note-tools {
+  position: absolute;
+  inset: 0 5px auto 6px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.note:hover .note-tools,
+.note:focus-within .note-tools { opacity: 1; }
+.note-tools > * { pointer-events: auto; }
+
+.swatches { display: flex; gap: 4px; }
+
+.swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgb(0 0 0 / 0.18);
+  padding: 0;
+  cursor: pointer;
+  background: hsl(var(--sw-h) calc(70% * var(--sw-s, 1)) 62%);
+  transition: transform 0.18s var(--ease-spring);
+}
+.swatch:hover { transform: scale(1.28); }
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px currentColor; }
+
+.note-del {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: none;
+  color: inherit;
+  opacity: 0.55;
+}
+.note-del:hover { opacity: 1; background: currentColor; }
+.note-del:hover svg { fill: hsl(var(--note-h) calc(44% * var(--note-s)) 17%); }
+.note-del svg { width: 11px; height: 11px; fill: currentColor; }
+
+.note textarea {
+  flex: 1;
+  width: 100%;
+  margin: 26px 0 0;
+  padding: 6px 13px 15px;
+  background: none;
+  border: 0;
+  outline: none;
+  resize: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.note textarea::placeholder { color: currentColor; opacity: 0.4; }
+
+.note-grip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.note:hover .note-grip { opacity: 0.4; }
+.note-grip::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+}
+
+/* --------------------------------------------------------------------------
+   Print annotation - the pencil line under a gallery print
+   -------------------------------------------------------------------------- */
+
+#annotation {
+  position: fixed;
+  left: var(--edge-x);
+  bottom: var(--edge-y);
+  z-index: 3;
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  color: inherit;
+  cursor: copy;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  text-shadow: var(--halo);
+  transition: opacity 0.3s;
+}
+#annotation:hover { opacity: 0.85; }
+
+/* --------------------------------------------------------------------------
+   Controls
+   -------------------------------------------------------------------------- */
+
+#controls {
+  position: fixed;
+  right: var(--edge-x);
+  bottom: var(--edge-y);
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+}
+
+.ctl {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.5;
+  background: rgb(var(--surface) / var(--plate-a));
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  border: 1px solid rgb(var(--ink) / var(--hairline));
+  transition: opacity 0.22s, transform 0.22s var(--ease-spring), background 0.22s;
+}
+
+#controls:hover .ctl,
+#controls:focus-within .ctl { opacity: 0.78; }
+
+.ctl:hover {
+  opacity: 1 !important;
+  transform: translateY(-3px);
+  background: rgb(var(--surface) / var(--plate-hi));
+}
+.ctl:active { transform: translateY(-1px) scale(0.94); }
+.ctl svg { width: 18px; height: 18px; fill: currentColor; }
+
+#btn-new:hover svg { animation: spin-once 0.6s var(--ease-out); }
+@keyframes spin-once { to { transform: rotate(180deg); } }
+
+.ctl.busy svg { visibility: hidden; }
+.ctl.busy::after {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid rgb(var(--ink) / 0.25);
+  border-top-color: rgb(var(--accent));
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --------------------------------------------------------------------------
+   Toast
+   -------------------------------------------------------------------------- */
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  z-index: 30;
+  transform: translate(-50%, 14px);
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: rgb(var(--surface) / var(--plate-hi));
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  border: 1px solid rgb(var(--ink) / var(--hairline));
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.4s var(--ease-spring);
+}
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* --------------------------------------------------------------------------
+   Tight viewports
+   -------------------------------------------------------------------------- */
+
+@media (max-height: 620px) {
+  :root { --gap: 16px; }
+  #clock-time { font-size: clamp(40px, 6vw, 62px); }
+  #clock-date { margin-top: 10px; }
+}
+
+@media (max-width: 520px) {
+  #app { padding: 70px 14px 100px; }
+  #annotation { font-size: 9px; letter-spacing: 0.14em; }
+}

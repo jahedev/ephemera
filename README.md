@@ -1,24 +1,43 @@
-# Another New Tab
+# Ephemera
 
-A Chrome extension that paints a **freshly generated wallpaper on every new tab** — procedurally, on-device, never the same one twice. Any wallpaper you like can be downloaded in 4K.
+*Ephemera: printed matter never meant to be kept.*
 
-## Features
+A Chrome extension that pulls **a freshly generated print on every new tab** —
+procedurally, on-device, never the same one twice. Keep the one you like at 4K;
+the rest are gone the moment you close the tab.
 
-- **9 generative art styles**, each with randomized parameters:
-  - **Silk** — glowing flow-field threads
-  - **Bloom** — soft mesh-gradient color fields
-  - **Highlands** — layered mountain ridges at dusk or under a starry night
-  - **Aurora** — northern-lights curtains over a dark landscape
-  - **Facets** — low-poly triangle meshes
-  - **Nebula** — domain-warped gas clouds and starfields
-  - **Conduit** — truchet arc tile patterns
-  - **Mosaic** — bold bauhaus-style shape grids
-  - **Topo** — concentric contour-line rings
-- **18 curated color palettes**, picked at random per wallpaper
-- **4K download** — every wallpaper is seeded, so the download button re-renders the exact image you're looking at at 3840×2160+
-- **Optional search bar** (off by default) with Google, YouTube, or DuckDuckGo
-- Style picker: keep it on "Surprise me" or lock to a favorite style
-- No network requests, no tracking — everything renders locally
+On top of the print sits as much or as little as you want: a clock, a search bar
+that knows more than one destination, pinned sites, and sticky notes you can drag
+anywhere.
+
+## The print
+
+- **9 generative styles**, each with randomized parameters:
+  Silk (flow-field threads) · Bloom (mesh gradients) · Highlands (layered ridges) ·
+  Aurora (northern-lights curtains) · Facets (low-poly meshes) · Nebula (domain-warped
+  gas clouds) · Conduit (truchet arcs) · Mosaic (bauhaus grids) · Topo (contour rings)
+- **18 curated palettes**, picked at random per print
+- **Fully seeded** — every pixel, down to the film grain, derives from one 32-bit
+  seed, so the download button re-renders exactly the image on your screen at
+  3840×2160 or larger
+- **Change it when you want**: every tab, hourly, daily, or only when you shuffle
+- Each print is captioned like a gallery print — `№ 3F9A2C · SILK ON EMBER · 1/1`.
+  Click the annotation to copy the seed; `?seed=3F9A2C` brings it back.
+
+## On top of it
+
+| | |
+|---|---|
+| **Clock** | 12- or 24-hour, optional seconds and date |
+| **Search** | 13 built-in engines — Google, DuckDuckGo, Bing, YouTube, Gmail, Google Maps, Amazon, Wayback Machine, GitHub, Wikipedia, Reddit, ChatGPT, Claude — plus your own. Choose which appear and in what order. |
+| **Pinned sites** | Tiles with real favicons or generated monograms, drag to reorder |
+| **Sticky notes** | Drag, resize, six colours, saved as you type |
+| **Theme** | Light, dark, or follow the system |
+
+Everything is optional. Turn it all off and you have a wallpaper.
+
+The UI takes its accent colour from the print it's sitting on, so it re-tints
+itself every time the wallpaper changes.
 
 ## Install
 
@@ -27,19 +46,42 @@ A Chrome extension that paints a **freshly generated wallpaper on every new tab*
 3. Click **Load unpacked** and select this folder
 4. Open a new tab
 
-## Usage
+## Shortcuts
 
-| Action | How |
+| Action | Key |
 |---|---|
-| New wallpaper | shuffle button (bottom right) or press `N` |
-| Download in 4K | download button or press `D` |
-| Toggle search bar / engine / style | gear button |
-| Focus the search bar | press `/` |
+| Pull another print | `N` |
+| New note | `Shift` `N` |
+| Save the print in 4K | `D` |
+| Jump to search | `/` or `⌘K` |
+| Next engine, while searching | `Tab` |
+| Settings | `,` |
+| Close settings | `Esc` |
+
+## Privacy
+
+No network requests, no analytics, no accounts. Prints are generated on your
+machine. Settings and pins live in `chrome.storage.sync`; notes and the current
+print stay in `chrome.storage.local` and never leave the device.
+
+The `favicon` permission is only used to read icons the browser has already
+cached for sites you pinned — it fetches nothing.
 
 ## Development
 
-Plain HTML/CSS/JS (ES modules), no build step. To preview outside the
-extension, serve the folder (`python3 -m http.server`) and open
-`newtab.html?style=silk&seed=42` — the `style`, `seed`, and `search` query
-params force a specific render, which is handy for iterating on generators
-in `js/art/generators.js`.
+Plain HTML/CSS/JS (ES modules), no build step.
+
+```
+css/    base.css (tokens, theming, wallpaper stack) · widgets.css · panel.css
+js/     newtab.js (orchestration) · store.js · engines.js · wallpaper.js · theme.js
+js/art/         the generators — palettes, noise, post-processing, draw routines
+js/widgets/     clock · search · pins · notes
+js/ui/          panel · dialog · sortable · toast
+```
+
+To iterate on generators, serve the folder (`python3 -m http.server`) and open
+`newtab.html?style=silk&seed=3F9A2C`. The `style` and `seed` query params force a
+specific render; outside the extension, storage falls back to `localStorage`.
+
+Every generator must draw only from the `rng` it is handed — that determinism is
+what makes the 4K download match the screen.

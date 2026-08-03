@@ -11,7 +11,9 @@ export function vignette(ctx, w, h, strength = 0.3) {
   ctx.fillRect(0, 0, w, h);
 }
 
-export function grain(ctx, w, h, amount = 0.05) {
+// The rng is threaded through so the grain is part of the seed: re-rendering
+// the same print - on resize, or at 4K for download - reproduces it exactly.
+export function grain(ctx, w, h, amount = 0.05, rng = Math.random) {
   const size = 140;
   const t = document.createElement("canvas");
   t.width = t.height = size;
@@ -19,7 +21,7 @@ export function grain(ctx, w, h, amount = 0.05) {
   const id = tc.createImageData(size, size);
   const d = id.data;
   for (let i = 0; i < d.length; i += 4) {
-    const v = (Math.random() * 255) | 0;
+    const v = (rng() * 255) | 0;
     d[i] = d[i + 1] = d[i + 2] = v;
     d[i + 3] = 255;
   }
