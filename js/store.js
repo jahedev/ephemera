@@ -8,7 +8,6 @@
 
 export const DEFAULTS = {
   version: 2,
-  theme: "system", // light | dark | system
   dim: 0.3,
   motion: true,
   clock: { enabled: true, hour12: true, seconds: false, date: true },
@@ -90,9 +89,28 @@ export async function boot() {
   };
 }
 
-export function saveSettings(settings) {
-  writeArea("sync", { settings });
+// chrome.storage.sync allows 120 writes a minute and 1800 an hour, and a
+// dragged slider fires far more than that. Coalesce writes and flush whatever
+// is outstanding when the page goes away.
+let pendingSettings = null;
+
+function flushSettings() {
+  if (!pendingSettings) return;
+  writeArea("sync", { settings: pendingSettings });
+  pendingSettings = null;
 }
+
+const flushSettingsSoon = debounce(flushSettings, 350);
+
+export function saveSettings(settings) {
+  pendingSettings = settings;
+  flushSettingsSoon();
+}
+
+addEventListener("pagehide", flushSettings);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") flushSettings();
+});
 
 export function saveNotes(notes) {
   writeArea("local", { notes });

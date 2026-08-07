@@ -325,12 +325,6 @@
   animation: note-in 0.4s var(--ease-spring) both;
 }
 
-html[data-theme="light"] .note {
-  background: hsl(var(--note-h) calc(76% * var(--note-s)) 88% / 0.86);
-  color: hsl(var(--note-h) calc(55% * var(--note-s)) 19%);
-  border-color: hsl(var(--note-h) calc(50% * var(--note-s)) 42% / 0.22);
-}
-
 @keyframes note-in {
   from { opacity: 0; transform: rotate(var(--rot, 0deg)) scale(0.88); }
   to   { opacity: 1; transform: rotate(var(--rot, 0deg)) scale(1); }

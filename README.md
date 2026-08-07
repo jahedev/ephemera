@@ -32,7 +32,7 @@ anywhere.
 | **Search** | 13 built-in engines — Google, DuckDuckGo, Bing, YouTube, Gmail, Google Maps, Amazon, Wayback Machine, GitHub, Wikipedia, Reddit, ChatGPT, Claude — plus your own. Choose which appear and in what order. |
 | **Pinned sites** | Tiles with real favicons or generated monograms, drag to reorder |
 | **Sticky notes** | Drag, resize, six colours, saved as you type |
-| **Theme** | Light, dark, or follow the system |
+| **Dimmer** | Scrim over the print, for when a bright one fights the text |
 
 Everything is optional. Turn it all off and you have a wallpaper.
 
@@ -73,7 +73,7 @@ Plain HTML/CSS/JS (ES modules), no build step.
 
 ```
 css/    base.css (tokens, theming, wallpaper stack) · widgets.css · panel.css
-js/     newtab.js (orchestration) · store.js · engines.js · wallpaper.js · theme.js
+js/     newtab.js (orchestration) · store.js · engines.js · wallpaper.js
 js/art/         the generators — palettes, noise, post-processing, draw routines
 js/widgets/     clock · search · pins · notes
 js/ui/          panel · dialog · sortable · toast

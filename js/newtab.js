@@ -6,7 +6,6 @@
 
 import { boot, saveSettings, saveNotes, savePrint, debounce } from "./store.js";
 import * as Wall from "./wallpaper.js";
-import { initTheme, setTheme, isDark } from "./theme.js";
 import { updateClock } from "./widgets/clock.js";
 import { updateSearch, focusSearch } from "./widgets/search.js";
 import { updatePins } from "./widgets/pins.js";
@@ -28,7 +27,6 @@ let downloading = false;
 function applyAll() {
   document.documentElement.style.setProperty("--dim", settings.dim);
   document.body.classList.toggle("motion", settings.motion && !reducedMotion);
-  setTheme(settings.theme);
   updateClock(settings.clock);
   updateSearch(settings.search, save);
   updatePins(settings.pins, save);
@@ -50,7 +48,7 @@ function commit({ rerender = false } = {}) {
 /* ---- the print ---- */
 
 function renderPrint() {
-  const { gen, pal } = Wall.show(print.seed, print.styleId, isDark());
+  const { gen, pal } = Wall.show(print.seed, print.styleId);
   annotation.textContent = `№ ${Wall.seedLabel(print.seed)} · ${gen.name} on ${pal.name} · 1/1`;
   savePrint(print);
 }
@@ -166,7 +164,7 @@ addEventListener("pointermove", (e) => {
   // Wash first: it costs nothing and means the tab is never blank while a
   // generator runs.
   Wall.paintWash(print.seed);
-  initTheme(settings.theme, (dark) => Wall.applyAccent(dark));
+  Wall.applyAccent();
 
   applyAll();
   updateNotes({ list: data.notes, on: settings.notes.enabled, onSave: saveNotes });

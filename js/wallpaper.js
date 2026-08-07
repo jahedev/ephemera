@@ -36,12 +36,11 @@ export function paletteFor(seed) {
 
 const luma = ([r, g, b]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 
-// Pick the palette entry that will read as an accent against the current
-// surface: bright on dark chrome, mid-tone on light chrome. Palettes are
-// ordered dark to light, but their ranges differ, so match on luminance
-// rather than trusting an index.
-function accentOf(pal, isDark) {
-  const target = isDark ? 0.7 : 0.42;
+// Pick the palette entry that will read as an accent against the dark chrome.
+// Palettes are ordered dark to light, but their ranges differ, so match on
+// luminance rather than trusting an index.
+function accentOf(pal) {
+  const target = 0.7;
   let best = pal.colors[pal.colors.length - 1];
   let dist = Infinity;
   for (const hex of pal.colors) {
@@ -53,8 +52,8 @@ function accentOf(pal, isDark) {
 
 const triple = (c) => `${c[0] | 0} ${c[1] | 0} ${c[2] | 0}`;
 
-export function applyAccent(isDark) {
-  const accent = accentOf(palette, isDark);
+export function applyAccent() {
+  const accent = accentOf(palette);
   root.style.setProperty("--accent", triple(accent));
   // whatever sits on top of a solid accent fill has to stay readable, and the
   // accent changes with every print
@@ -85,14 +84,14 @@ function renderTo(cnv, cssW, cssH, pxScale, seed, styleId) {
   return { pal, gen };
 }
 
-export function show(seed, styleId, isDark) {
+export function show(seed, styleId) {
   current = { seed, styleId };
   palette = paletteFor(seed);
 
   const back = layers[front === 0 ? 1 : 0];
   const info = renderTo(back, innerWidth, innerHeight, Math.min(devicePixelRatio || 1, 2), seed, styleId);
 
-  applyAccent(isDark);
+  applyAccent();
   back.style.zIndex = ++z;
   back.getBoundingClientRect(); // flush, so the fade actually animates
   back.classList.add("on");

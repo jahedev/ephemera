@@ -243,10 +243,6 @@ export function mountPanel(config) {
 // Push the current settings back into every control. Called after each commit
 // so controls that depend on one another (engine list, style lock) stay honest.
 export function syncPanel() {
-  segment($("opt-theme"), settings.theme, (v) => {
-    settings.theme = v;
-    commit();
-  });
   const dim = $("opt-dim");
   dim.value = Math.round(settings.dim * 100);
   dim.oninput = () => {
