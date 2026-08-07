@@ -2,6 +2,7 @@
 // object and calls commit(), which saves and re-applies.
 
 import * as Engines from "../engines.js";
+import * as Wall from "../wallpaper.js";
 import { ask } from "./dialog.js";
 import { sortable, move } from "./sortable.js";
 import { addPin } from "../widgets/pins.js";
@@ -10,11 +11,14 @@ import { addNote } from "../widgets/notes.js";
 const panel = document.getElementById("panel");
 const toggleBtn = document.getElementById("btn-settings");
 const engineList = document.getElementById("engine-list");
+const favGrid = document.getElementById("fav-grid");
+const favEmpty = document.getElementById("fav-empty");
 
 const $ = (id) => document.getElementById(id);
 
 let settings = null;
 let commit = () => {};
+let host = {};
 
 /* ---- small control helpers ---- */
 
@@ -59,9 +63,12 @@ function engineRow(engine) {
   const name = document.createElement("span");
   name.className = "name";
   name.textContent = engine.name;
-  if (engine.id.startsWith("x-")) {
+  const sub = [engine.bang ? `!${engine.bang}` : null, engine.id.startsWith("x-") ? engine.url.replace(/^https?:\/\//, "") : null]
+    .filter(Boolean)
+    .join("  ");
+  if (sub) {
     const small = document.createElement("small");
-    small.textContent = engine.url.replace(/^https?:\/\//, "");
+    small.textContent = sub;
     name.append(small);
   }
 
@@ -142,11 +149,22 @@ async function addCustomEngine() {
         placeholder: "https://example.com/search?q=%s",
         hint: "Put %s where your query belongs. Copy a real search URL from the site and swap the words you searched for with %s.",
         mono: true
+      },
+      {
+        key: "bang",
+        label: "Bang",
+        placeholder: "hn",
+        hint: "Type !hn in the search bar to use this engine for one search. Leave empty to skip.",
+        mono: true
       }
     ],
     validate: (v) => {
       if (!v.name) return "Give the engine a name.";
       if (!v.url.includes("%s")) return "The URL needs %s where the query goes.";
+      const bang = v.bang.replace(/^!/, "").toLowerCase();
+      if (bang && Engines.all(settings.search).some((e) => (e.bang || "").toLowerCase() === bang)) {
+        return `!${bang} is already taken.`;
+      }
       try {
         const u = new URL(v.url.replace("%s", "test"));
         if (!/^https?:$/.test(u.protocol)) return "Use an http or https URL.";
@@ -162,6 +180,7 @@ async function addCustomEngine() {
     id: Engines.customId(values.name),
     name: values.name,
     short: values.name,
+    bang: values.bang.replace(/^!/, "").toLowerCase() || Engines.suggestBang(settings.search, values.name),
     hint: `Search ${values.name}`,
     url: values.url
   };
@@ -170,6 +189,49 @@ async function addCustomEngine() {
   settings.search.engine = engine.id;
   renderEngines();
   commit();
+}
+
+/* ---- kept prints ---- */
+
+// Thumbnails are re-rendered from the seed rather than stored as images: a
+// favorite is 40 bytes, and it can be re-pulled at any size later.
+export function renderFavorites() {
+  const list = host.favorites?.() || [];
+  favEmpty.hidden = list.length > 0;
+  favGrid.replaceChildren(
+    ...list
+      .slice()
+      .reverse()
+      .map((fav) => {
+        const item = document.createElement("div");
+        item.className = "fav";
+
+        const cnv = document.createElement("canvas");
+        cnv.className = "fav-thumb";
+        Wall.renderPreview(cnv, 138, 82, fav.seed, fav.styleId);
+
+        const open = document.createElement("button");
+        open.type = "button";
+        open.className = "fav-open";
+        open.title = `${Wall.describe(fav.seed, fav.styleId)} · ${Wall.seedLabel(fav.seed)}`;
+        open.setAttribute("aria-label", `Show ${open.title}`);
+        open.addEventListener("click", () => host.showPrint(fav));
+
+        const drop = document.createElement("button");
+        drop.type = "button";
+        drop.className = "fav-drop";
+        drop.setAttribute("aria-label", `Remove ${open.title}`);
+        drop.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6.4 5A1 1 0 0 0 5 6.4L10.6 12 5 17.6A1 1 0 0 0 6.4 19L12 13.4 17.6 19a1 1 0 0 0 1.4-1.4L13.4 12 19 6.4A1 1 0 0 0 17.6 5L12 10.6 6.4 5z"/></svg>';
+        drop.addEventListener("click", () => host.unfavorite(fav));
+
+        const label = document.createElement("span");
+        label.className = "fav-label";
+        label.textContent = Wall.seedLabel(fav.seed);
+
+        item.append(cnv, open, drop, label);
+        return item;
+      })
+  );
 }
 
 /* ---- open / close ---- */
@@ -198,6 +260,7 @@ export function togglePanel() {
     panel.hidden = false;
     toggleBtn.setAttribute("aria-expanded", "true");
     renderEngines();
+    renderFavorites();
   } else {
     closePanel();
   }
@@ -220,6 +283,7 @@ document.addEventListener("click", (e) => {
 export function mountPanel(config) {
   settings = config.settings;
   commit = config.commit;
+  host = config;
 
   const styleSelect = $("opt-style");
   styleSelect.replaceChildren();
@@ -237,7 +301,20 @@ export function mountPanel(config) {
     addNote();
   });
 
+  $("do-export").addEventListener("click", () => host.exportBackup());
+  $("do-import").addEventListener("click", () => $("import-file").click());
+  $("import-file").addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) host.importBackup(file);
+  });
+
   syncPanel();
+}
+
+// The settings object is replaced wholesale on import or a cross-tab change.
+export function rebind(next) {
+  settings = next;
 }
 
 // Push the current settings back into every control. Called after each commit
@@ -273,6 +350,10 @@ export function syncPanel() {
 
   check($("opt-search"), settings.search.enabled, (v) => {
     settings.search.enabled = v;
+    commit();
+  });
+  check($("opt-autofocus"), settings.search.autofocus, (v) => {
+    settings.search.autofocus = v;
     commit();
   });
 

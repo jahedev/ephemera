@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Ephemera - Generative New Tab",
   "short_name": "Ephemera",
-  "version": "2.0.0",
-  "description": "A new procedural print on every tab, never the same one twice. Clock, search, pinned sites and sticky notes on top - all optional, all yours.",
+  "version": "2.1.0",
+  "description": "A new procedurally generated print on every tab, never the same twice. Clock, multi-engine search, pins and sticky notes.",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
@@ -12,6 +12,5 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "offline_enabled": true
+  }
 }

@@ -280,6 +280,103 @@ input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.22); }
 .checklist input[type="checkbox"]::after { width: 15px; height: 15px; }
 .checklist input[type="checkbox"]:checked::after { left: 15px; }
 
+/* ---- kept prints ---- */
+
+.fav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.fav {
+  position: relative;
+  border-radius: 9px;
+  overflow: hidden;
+  aspect-ratio: 138 / 82;
+  border: 1px solid rgb(var(--ink) / 0.1);
+  transition: transform 0.22s var(--ease-out), border-color 0.22s;
+}
+.fav:hover {
+  transform: translateY(-2px);
+  border-color: rgb(var(--accent) / 0.6);
+}
+
+.fav-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* the whole tile is the button; the canvas just sits underneath it */
+.fav-open {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.fav-drop {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgb(8 8 12 / 0.6);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.16s, background 0.16s;
+}
+.fav:hover .fav-drop,
+.fav:focus-within .fav-drop { opacity: 1; }
+.fav-drop:hover { background: rgb(8 8 12 / 0.9); }
+.fav-drop svg { width: 10px; height: 10px; fill: currentColor; }
+
+/* the seed sits over an arbitrary image, so it brings its own footing */
+.fav::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.62), transparent);
+}
+
+.fav-label {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: #fff;
+  opacity: 0.75;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.8);
+}
+
+/* ---- paired buttons ---- */
+
+.pair { display: flex; gap: 8px; }
+.pair .ghost { margin-top: 0; }
+
+.hint code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgb(var(--ink) / 0.1);
+}
+
 /* ---- dialog ---- */
 
 #dlg {

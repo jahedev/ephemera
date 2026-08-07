@@ -45,8 +45,17 @@
   <button class="ctl" id="btn-note" title="New note (Shift+N)" aria-label="New note">
     <svg viewBox="0 0 24 24"><path d="M5 3h9.2L21 9.8V21a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm8 2H6v14h13v-8h-5a1 1 0 0 1-1-1V5zm2 1.4V9h2.6L15 6.4z"/></svg>
   </button>
+  <button class="ctl" id="btn-back" title="Previous print (&#8592;)" aria-label="Previous print" hidden>
+    <svg viewBox="0 0 24 24"><path d="M15.4 4.6a1 1 0 0 1 0 1.4L9.4 12l6 6a1 1 0 0 1-1.4 1.4l-6.7-6.7a1 1 0 0 1 0-1.4L14 4.6a1 1 0 0 1 1.4 0z"/></svg>
+  </button>
+  <button class="ctl" id="btn-forward" title="Next print (&#8594;)" aria-label="Next print" hidden>
+    <svg viewBox="0 0 24 24"><path d="M8.6 4.6a1 1 0 0 0 0 1.4l6 6-6 6a1 1 0 0 0 1.4 1.4l6.7-6.7a1 1 0 0 0 0-1.4L10 4.6a1 1 0 0 0-1.4 0z"/></svg>
+  </button>
   <button class="ctl" id="btn-new" title="Pull another print (N)" aria-label="New wallpaper">
     <svg viewBox="0 0 24 24"><path d="M17.6 6.4 15.3 4.1a1 1 0 0 1 1.4-1.4l4 4a1 1 0 0 1 0 1.4l-4 4a1 1 0 0 1-1.4-1.4l2.3-2.3H8a3 3 0 0 0-3 3 1 1 0 0 1-2 0 5 5 0 0 1 5-5h9.6zM6.4 17.6l2.3 2.3a1 1 0 0 1-1.4 1.4l-4-4a1 1 0 0 1 0-1.4l4-4a1 1 0 1 1 1.4 1.4l-2.3 2.3H16a3 3 0 0 0 3-3 1 1 0 1 1 2 0 5 5 0 0 1-5 5H6.4z"/></svg>
+  </button>
+  <button class="ctl" id="btn-fav" title="Keep this print (F)" aria-label="Keep this print" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.27 5.82.85-4.21 4.1.99 5.79L12 16.87l-5.2 2.74.99-5.79-4.21-4.1 5.82-.85L12 3.6z"/></svg>
   </button>
   <button class="ctl" id="btn-download" title="Save this print in 4K (D)" aria-label="Download wallpaper">
     <svg viewBox="0 0 24 24"><path d="M12 3a1 1 0 0 1 1 1v9.6l3.3-3.3a1 1 0 0 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM4 18a1 1 0 0 1 1 1h14a1 1 0 1 1 0 2H5a2 2 0 0 1-2-2 1 1 0 0 1 1-1z"/></svg>
@@ -99,7 +108,11 @@
       <div class="row"><label class="label" for="opt-search">Show search bar</label>
         <input type="checkbox" id="opt-search">
       </div>
-      <p class="hint">Checked engines appear under the search bar. Drag to reorder them.</p>
+      <div class="row"><label class="label" for="opt-autofocus">Start typing in the search bar</label>
+        <input type="checkbox" id="opt-autofocus">
+      </div>
+      <p class="hint">Off by default, because Chrome puts the cursor in the address bar when you open a tab.</p>
+      <p class="hint">Checked engines appear under the search bar. Drag to reorder them. Type an engine's bang — <code>!gh</code>, <code>!yt</code> — to jump to it for one search.</p>
       <ul class="checklist" id="engine-list"></ul>
       <button type="button" class="ghost" id="add-engine">Add a custom engine</button>
     </section>
@@ -147,11 +160,30 @@
     </section>
 
     <section>
+      <h3>Kept prints</h3>
+      <p class="hint" id="fav-empty">Nothing kept yet. Press the star when a print is worth coming back to.</p>
+      <div class="fav-grid" id="fav-grid"></div>
+    </section>
+
+    <section>
+      <h3>Backup</h3>
+      <p class="hint">Everything lives on this machine. Take a copy before you switch computers.</p>
+      <div class="pair">
+        <button type="button" class="ghost" id="do-export">Export a backup</button>
+        <button type="button" class="ghost" id="do-import">Restore a backup</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </section>
+
+    <section>
       <h3>Shortcuts</h3>
       <dl class="keys">
         <dt><kbd>N</kbd></dt><dd>Pull another print</dd>
+        <dt><kbd>&#8592;</kbd><kbd>&#8594;</kbd></dt><dd>Step through recent prints</dd>
+        <dt><kbd>F</kbd></dt><dd>Keep this print</dd>
         <dt><kbd>&#8679;</kbd><kbd>N</kbd></dt><dd>New note</dd>
         <dt><kbd>D</kbd></dt><dd>Save in 4K</dd>
+        <dt><kbd>1</kbd>&ndash;<kbd>9</kbd></dt><dd>Open that pinned site</dd>
         <dt><kbd>/</kbd></dt><dd>Jump to search</dd>
         <dt><kbd>&#8677;</kbd></dt><dd>Next engine, while searching</dd>
         <dt><kbd>,</kbd></dt><dd>Settings</dd>

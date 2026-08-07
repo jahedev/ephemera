@@ -1,8 +1,10 @@
 // The wallpaper generators. Each draw() receives a 2D context already scaled
 // so that (w, h) are logical CSS pixels, a seeded rng, a palette, and px
-// (physical pixels per logical unit, used only to size per-pixel buffers).
-// All randomness must come from rng so a wallpaper can be re-rendered
-// identically at a higher resolution for download.
+// (physical pixels per logical unit).
+//
+// All randomness must come from rng, and nothing that affects the composition
+// may depend on px - otherwise the 4K download stops matching the screen.
+// px is passed for cases that need to know the true output resolution.
 
 import { TAU, rr, ri, pick, clamp, smoothstep, rgb, css, mix, shade, sampleGrad } from "./util.js";
 import { makeNoise2D, makeFbm } from "./noise.js";
@@ -294,8 +296,11 @@ function drawNebula(ctx, w, h, rng, pal, px) {
   const fbm3 = makeFbm(noise, 3, 2.1, 0.55);
   const fbm4 = makeFbm(noise, 4, 2.05, 0.5);
 
-  // Per-pixel pass runs on a smaller buffer; clouds are soft so upscaling is free
-  const oW = Math.max(240, Math.min(1000, Math.round(w * px * 0.26)));
+  // Per-pixel pass runs on a smaller buffer; clouds are soft so upscaling is
+  // free. Deliberately sized from the CSS width alone, not the pixel scale:
+  // this is the one generator whose output would otherwise change between the
+  // screen render and the 4K one, and it is by far the most expensive.
+  const oW = Math.max(240, Math.min(640, Math.round(w * 0.42)));
   const oH = Math.max(2, Math.round((oW * h) / w));
   const off = document.createElement("canvas");
   off.width = oW;

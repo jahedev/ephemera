@@ -132,6 +132,18 @@ export function download() {
   });
 }
 
+// Small preview of a stored print, for the favorites grid.
+export function renderPreview(cnv, w, h, seed, styleId) {
+  return renderTo(cnv, w, h, Math.min(devicePixelRatio || 1, 2), seed, styleId);
+}
+
+export function describe(seed, styleId) {
+  const rng = mulberry32(seed);
+  const pal = PALETTES[Math.floor(rng() * PALETTES.length)];
+  const gen = GENERATORS.find((g) => g.id === styleId) || GENERATORS[0];
+  return `${gen.name} on ${pal.name}`;
+}
+
 export function seedLabel(seed) {
   return (seed >>> 0).toString(16).toUpperCase().padStart(8, "0").slice(-6);
 }

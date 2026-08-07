@@ -21,6 +21,10 @@ anywhere.
   seed, so the download button re-renders exactly the image on your screen at
   3840×2160 or larger
 - **Change it when you want**: every tab, hourly, daily, or only when you shuffle
+- **Keep the ones you like** — press the star and a print is saved as a seed, not
+  an image. Kept prints appear as live thumbnails in settings and can be re-pulled
+  at any size, forever.
+- **Step back** through the last 20 prints you've seen, across every tab
 - Each print is captioned like a gallery print — `№ 3F9A2C · SILK ON EMBER · 1/1`.
   Click the annotation to copy the seed; `?seed=3F9A2C` brings it back.
 
@@ -30,9 +34,11 @@ anywhere.
 |---|---|
 | **Clock** | 12- or 24-hour, optional seconds and date |
 | **Search** | 13 built-in engines — Google, DuckDuckGo, Bing, YouTube, Gmail, Google Maps, Amazon, Wayback Machine, GitHub, Wikipedia, Reddit, ChatGPT, Claude — plus your own. Choose which appear and in what order. |
-| **Pinned sites** | Tiles with real favicons or generated monograms, drag to reorder |
-| **Sticky notes** | Drag, resize, six colours, saved as you type |
+| **Bangs** | `!gh rust` searches GitHub for one query, then hands the bar back. Works for every engine, including ones hidden from the strip. |
+| **Pinned sites** | Tiles with real favicons or generated monograms, drag to reorder, open with `1`–`9` |
+| **Sticky notes** | Drag, resize, six colors, saved as you type |
 | **Dimmer** | Scrim over the print, for when a bright one fights the text |
+| **Backup** | Export settings, kept prints and notes to a JSON file, and restore them |
 
 Everything is optional. Turn it all off and you have a wallpaper.
 
@@ -51,12 +57,18 @@ itself every time the wallpaper changes.
 | Action | Key |
 |---|---|
 | Pull another print | `N` |
+| Step through recent prints | `←` `→` |
+| Keep this print | `F` |
 | New note | `Shift` `N` |
 | Save the print in 4K | `D` |
+| Open a pinned site | `1`–`9` |
 | Jump to search | `/` or `⌘K` |
 | Next engine, while searching | `Tab` |
 | Settings | `,` |
 | Close settings | `Esc` |
+
+A focused note takes arrow keys to move, `Enter` to edit, `Esc` to step back out,
+and `Delete` to remove.
 
 ## Privacy
 
@@ -72,11 +84,13 @@ cached for sites you pinned — it fetches nothing.
 Plain HTML/CSS/JS (ES modules), no build step.
 
 ```
-css/    base.css (tokens, theming, wallpaper stack) · widgets.css · panel.css
+css/    base.css (tokens, wallpaper stack) · widgets.css · panel.css
 js/     newtab.js (orchestration) · store.js · engines.js · wallpaper.js
 js/art/         the generators — palettes, noise, post-processing, draw routines
 js/widgets/     clock · search · pins · notes
 js/ui/          panel · dialog · sortable · toast
+tools/          package.sh (build the zip) · screenshots.mjs (store assets)
+store/          listing.md — Web Store copy and permission justifications
 ```
 
 To iterate on generators, serve the folder (`python3 -m http.server`) and open

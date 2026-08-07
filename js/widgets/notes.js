@@ -54,6 +54,7 @@ function build(note) {
   const el = document.createElement("div");
   el.className = "note";
   el.dataset.id = note.id;
+  el.tabIndex = 0;
   el.style.setProperty("--rot", `${note.rot}deg`);
   el.style.zIndex = ++top;
 
@@ -121,6 +122,41 @@ function build(note) {
     if (e.target.closest("textarea, button")) return;
     if (e.target.classList.contains("note-grip")) startResize(e, el, note);
     else startDrag(e, el, note);
+  });
+
+  // Escape steps out of the text and onto the note itself, where the arrow
+  // keys move it - otherwise a note can only ever be positioned with a mouse.
+  text.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      el.focus();
+    }
+  });
+
+  el.addEventListener("keydown", (e) => {
+    if (e.target !== el) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      text.focus();
+      return;
+    }
+    if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      remove(note, el);
+      return;
+    }
+    const step = e.shiftKey ? 4 : 24;
+    const delta = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (!delta) return;
+    e.preventDefault();
+    const free = freeSpace(note);
+    const box = el.getBoundingClientRect();
+    const x = Math.min(Math.max(0, box.left + delta[0]), free.x);
+    const y = Math.min(Math.max(0, box.top + delta[1]), free.y);
+    note.fx = free.x ? x / free.x : 0;
+    note.fy = free.y ? y / free.y : 0;
+    place(el, note);
+    persistSoon();
   });
 
   return el;
@@ -228,4 +264,33 @@ export function updateNotes({ list, on, onSave }) {
   enabled = on;
   persist = onSave;
   if (list || was !== on) renderNotes();
+}
+
+// Another tab changed the notes. Adopting them immediately would fight anyone
+// mid-sentence, so if a note here has focus, wait until they're done.
+let deferred = null;
+
+export function adoptNotes(list) {
+  const editing = layer.contains(document.activeElement) && document.activeElement !== layer;
+  if (editing) {
+    deferred = list;
+    document.activeElement.addEventListener(
+      "blur",
+      () => {
+        if (deferred) {
+          notes = deferred;
+          deferred = null;
+          renderNotes();
+        }
+      },
+      { once: true }
+    );
+    return;
+  }
+  notes = list;
+  renderNotes();
+}
+
+export function currentNotes() {
+  return notes;
 }
